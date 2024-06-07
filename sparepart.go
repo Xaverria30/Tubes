@@ -99,7 +99,9 @@ func login_admin(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tData 
 	fmt.Println("2. Edit Data")
 	fmt.Println("3. Hapus Data")
 	fmt.Println("4. Lihat Transaksi")
-	fmt.Println("5. Kembali")
+	fmt.Println("5. Lihat daftar pelanggan ")
+	fmt.Println("   yang membeli sparepart tertentu")
+	fmt.Println("6. Kembali")
 	fmt.Println("==============================================")
 	fmt.Print("Pilih: ")
 	var pilih int
@@ -114,6 +116,8 @@ func login_admin(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tData 
 	case 4:
 		viewTransactions(S, P, T, sData, pData, tData)
 	case 5:
+		daftar_pelanggan_sparepart(S, P, T, sData, pData, tData)
+	case 6:
 		menu(S, P, T, sData, pData, tData)
 	default:
 		login_admin(S, P, T, sData, pData, tData)
@@ -177,14 +181,14 @@ func tambah_transaksi(S *spareparts, P *pelanggan, T *transaksi, sData, pData, t
 	fmt.Print("Masukan ID Pelanggan:")
 	fmt.Scanln(&transaksi.IDPelanggan)
 	if !checkPelangganExist(P, transaksi.IDPelanggan, *pData) {
-		fmt.Println("ID Pelanggan tidak ditemukan. (Sequential Search)")
+		fmt.Println("ID Pelanggan tidak ditemukan.")
 		login_admin(S, P, T, sData, pData, tData)
 		return
 	}
 	fmt.Print("Masukan ID Sparepart:")
 	fmt.Scanln(&transaksi.IDSparepart)
 	if !checkSparepartExist(S, transaksi.IDSparepart, *sData) {
-		fmt.Println("ID Sparepart tidak ditemukan. (Binary Search)")
+		fmt.Println("ID Sparepart tidak ditemukan.")
 		login_admin(S, P, T, sData, pData, tData)
 		return
 	}
@@ -196,11 +200,10 @@ func tambah_transaksi(S *spareparts, P *pelanggan, T *transaksi, sData, pData, t
 	T[*tData] = transaksi
 	(*tData)++
 
-	// Update jumlah terjual
 	for i := 0; i < *sData; i++ {
 		if S[i].ID == transaksi.IDSparepart {
 			S[i].Terjual += transaksi.Jumlah
-			i = *sData // Keluar loop
+			i = *sData
 		}
 	}
 
@@ -258,6 +261,34 @@ func viewTransactions(S *spareparts, P *pelanggan, T *transaksi, sData, pData, t
 		fmt.Println()
 	}
 
+	login_admin(S, P, T, sData, pData, tData)
+}
+
+func daftar_pelanggan_sparepart(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tData *int) {
+	var id int
+	fmt.Print("Masukan ID Sparepart yang ingin dicari pelanggannya: ")
+	fmt.Scanln(&id)
+	fmt.Println("Daftar Pelanggan yang membeli Sparepart ID:", id)
+	found := false
+	for i := 0; i < *tData; i++ {
+		if T[i].IDSparepart == id {
+			for j := 0; j < *pData; j++ {
+				if P[j].ID == T[i].IDPelanggan {
+					fmt.Println("------------------------------------------------")
+					fmt.Println("ID Pelanggan:", P[j].ID)
+					fmt.Println("Nama Pelanggan:", P[j].Nama)
+					fmt.Println("Total Pembelian:", T[i].Jumlah)
+					fmt.Println("Harga:", T[i].Harga)
+					fmt.Println("Pajak:", T[i].Pajak)
+					fmt.Println("Total Harga:", T[i].TotalHarga)
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		fmt.Println("Tidak ada pelanggan yang membeli sparepart dengan ID tersebut.")
+	}
 	login_admin(S, P, T, sData, pData, tData)
 }
 
@@ -472,9 +503,7 @@ func login_pembeli(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tDat
 	fmt.Println("1. Beli Sparepart motor")
 	fmt.Println("2. Cari Sparepart motor")
 	fmt.Println("3. Lihat daftar harga Sparepart motor")
-	fmt.Println("4. Lihat daftar pelanggan ")
-	fmt.Println("   yang membeli sparepart tertentu")
-	fmt.Println("5. Kembali")
+	fmt.Println("4. Kembali")
 	fmt.Println("==============================================")
 	fmt.Print("Pilih: ")
 	var pilih int
@@ -487,8 +516,6 @@ func login_pembeli(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tDat
 	case 3:
 		daftar_sparepart(S, sData, P, T, pData, tData)
 	case 4:
-		daftar_pelanggan_sparepart(S, P, T, sData, pData, tData)
-	case 5:
 		menu(S, P, T, sData, pData, tData)
 	default:
 		login_pembeli(S, P, T, sData, pData, tData)
@@ -620,34 +647,6 @@ func ascending_sparepart(S *spareparts, sData *int) {
 		}
 		S[i], S[minIdx] = S[minIdx], S[i]
 	}
-}
-
-func daftar_pelanggan_sparepart(S *spareparts, P *pelanggan, T *transaksi, sData, pData, tData *int) {
-	var id int
-	fmt.Print("Masukan ID Sparepart yang ingin dicari pelanggannya: ")
-	fmt.Scanln(&id)
-	fmt.Println("Daftar Pelanggan yang membeli Sparepart ID:", id)
-	found := false
-	for i := 0; i < *tData; i++ {
-		if T[i].IDSparepart == id {
-			for j := 0; j < *pData; j++ {
-				if P[j].ID == T[i].IDPelanggan {
-					fmt.Println("------------------------------------------------")
-					fmt.Println("ID Pelanggan:", P[j].ID)
-					fmt.Println("Nama Pelanggan:", P[j].Nama)
-					fmt.Println("Total Pembelian:", T[i].Jumlah)
-					fmt.Println("Harga:", T[i].Harga)
-					fmt.Println("Pajak:", T[i].Pajak)
-					fmt.Println("Total Harga:", T[i].TotalHarga)
-					found = true
-				}
-			}
-		}
-	}
-	if !found {
-		fmt.Println("Tidak ada pelanggan yang membeli sparepart dengan ID tersebut.")
-	}
-	login_pembeli(S, P, T, sData, pData, tData)
 }
 
 func scan_word() string {
